@@ -7,6 +7,7 @@ import authRouter from "./routes/auth.js";
 import userRouter from "./routes/user.js";
 import propertiesRouter from "./routes/properties.js";
 import rentalsRouter from "./routes/rentals.js";
+import errorHandler from "./middlewares/errorHandler.js";
 
 dotenv.config();
 const app = express();
@@ -30,6 +31,8 @@ app.use('/api/core-service/v1', coreServiceRouter);
 app.get('/health', (req, res) => res.json({
     ok:true
 }));
+
+app.use(errorHandler);
 
 app.listen(PORT, ()=>{
     console.log(`Core service running on http://localhost:${PORT}`);
