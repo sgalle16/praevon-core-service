@@ -15,4 +15,4 @@ const auth = (req, res, next) => {
   });
 };
 
-default export auth;
+export default auth;
