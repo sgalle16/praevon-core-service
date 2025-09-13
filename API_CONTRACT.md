@@ -450,3 +450,8 @@ Este documento define los **endpoints** del backend para el MVP de Praevon.
     }
 ]
 ```
+
+### `DELETE /api/core-service/v1/documents/:id` (🔒 requiere JWT)
+-   **Descripción**: Elimina un documento. Solo el usuario que subió el documento puede realizar esta acción.
+-   **Path param**: `id` (int) - El ID del documento a eliminar.
+-   **Respuesta 204 (No Content)**: El cuerpo de la respuesta estará vacío, indicando que la eliminación fue exitosa.
