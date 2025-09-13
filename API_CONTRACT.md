@@ -302,3 +302,151 @@ Este documento define los **endpoints** del backend para el MVP de Praevon.
   "createdAt": "2025-09-11T18:25:43.511Z"
 }
 ```
+---
+
+## 📂 Documents
+
+### `POST /api/core-service/v1/documents/upload-url` (🔒 requiere JWT)
+
+- **Descripción:** Solicita un "permiso" para subir un archivo. Devuelve una URL segura y de un solo uso para subir el archivo directamente a la nube.
+- **Headers**: Authorization: Bearer token
+
+- **Body**:
+
+```json
+{
+  "originalName": "mi_foto_de_propiedad.jpg",
+  "mimeType": "image/jpeg",
+  "size": 123456,
+  "type": "PROPERTY_PHOTO",
+  "propertyId": 1
+}
+```
+
+- **Valores permitidos de type**:
+  - TENANT_ID_FRONT
+
+  - TENANT_ID_BACK
+
+  - TENANT_INCOME_PROOF
+
+  - PROPERTY_PHOTO
+
+  - PROPERTY_DEED
+
+- **Respuesta**:
+
+```json
+{
+  "uploadUrl": "https://<AZURE_STORAGE_URL_CON_SAS_TOKEN>",
+  "documentId": 2
+}
+```
+
+### `PUT` a la URL de Azure (Frontend)
+
+-   **Descripción**:  El frontend realiza esta petición `PUT` directamente a la `uploadUrl` recibida  anteriormente. Esta petición NO se hace a la API de Praevon.
+-   **URL**: La `uploadUrl` completa proporcionada por el endpoint anterior.
+-   **Headers**:
+    -   `Content-Type`: Debe coincidir con el `mimeType` enviado en la petición de `upload-url`, ej: `image/jpg`
+    -   `x-ms-blob-type`: `BlockBlob`
+    -   **Importante:** NO incluir el header `Authorization: Bearer Token`.
+-   **Body**: El contenido binario del archivo a subir.
+-   **Respuesta Exitosa (de Azure)**: `201 Created` con un body vacío.
+
+### `POST /api/core-service/v1/documents/:id/upload-complete` (🔒 requiere JWT)
+
+- **Descripción:** Se llama después de que la petición PUT a la `uploadURL` de Azure fue exitosa. Confirma y finaliza el proceso en nuestro sistema.
+
+- **Headers**: Authorization: Bearer token
+
+- **Path param**: id (int) - El documentId
+
+- **Respuesta**:
+
+```json
+{
+    "id": 2,
+    "uniqueFileName": "property_photo/70987a17-7677-445f-b887-f75a3a018b3d.jpg",
+    "originalName": "mi_foto_de_propiedad.jpg",
+    "mimeType": "image/jpeg",
+    "storageUrl": "https://praevonsgsa.blob.core.windows.net/documents/property_photo/...",
+    "size": 123456,
+    "type": "PROPERTY_PHOTO",
+    "status": "PENDING_VALIDATION",
+    "createdAt": "2025-09-13T17:07:52.742Z",
+    "updatedAt": "2025-09-13T17:15:25.632Z",
+    "uploadedById": 1,
+    "propertyId": 1
+}
+```
+
+### `PATCH /api/core-service/v1/documents/:id/review` (🔒 requiere JWT)
+
+- **Descripción:** Permite a un usuario autorizado (generalmente un propietario en este caso) aprobar o rechazar un documento que ha sido subido.
+
+- **Headers**: Authorization: Bearer token
+
+- **Path param**: id (int) - El documentId
+
+- **Body**:
+
+```json
+{
+  "status": "APPROVED"
+}
+```
+
+- **Valores permitidos de status**:
+  - APPROVED
+
+  - REJECTED
+
+- **Respuesta**:
+
+```json
+{
+    "id": 2,
+    // ... otros campos del documento
+    "status": "APPROVED",
+    "updatedAt": "2025-09-13T17:27:45.507Z"
+}
+```
+
+
+### `GET /api/core-service/v1/documents/:id/download-url` (🔒 requiere JWT)
+
+- **Descripción:** Obtiene una URL segura y temporal para descargar un documento. Se aplican reglas de autorización estrictas.
+
+- **Headers**: Authorization: Bearer token
+
+- **Path param**: id (int) - El documentId
+
+- **Respuesta**:
+
+```json
+{
+  "downloadUrl": "https://<AZURE_STORAGE_URL_CON_SAS_TOKEN_DE_LECTURA>"
+}
+```
+
+### `GET /api/core-service/v1/documents/me` (🔒 requiere JWT)
+
+- **Descripción:** Obtiene la lista de todos los documentos que el usuario autenticado ha subido.
+
+- **Headers**: Authorization: Bearer token
+
+- **Respuesta**:
+
+```json
+[
+    {
+        "id": 2,
+        "originalName": "mi_foto_de_propiedad.jpg",
+        "type": "PROPERTY_PHOTO",
+        "status": "APPROVED",
+        "createdAt": "2025-09-13T17:07:52.742Z",
+        // ... otros campos
+    }
+]
+```
