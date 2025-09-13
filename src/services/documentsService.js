@@ -265,10 +265,51 @@ const getDocumentDownloadUrl = async (documentId, requestingUserId) => {
     return `${blockBlobClient.url}?${sasToken}`;
 };
 
+/**
+ * Deletes a document from both Azure Blob Storage and the database.
+ * The operation is authorized to ensure only the user who uploaded the document can delete it.
+ * @param {number} documentId - The unique identifier of the document to be deleted.
+ * @param {number} requestingUserId - The ID of the user attempting to perform the deletion.
+ * @returns {Promise<{success: boolean, message: string}>} A confirmation object upon successful deletion.
+ */
+const deleteDocument = async (documentId, requestingUserId) => {
+  // Find document and verify ownership in a single step.
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+  });
+
+  if (!document) {
+    throw new Error('Document not found');
+  }
+  
+  // Check if user owns the document
+  if (document.uploadedById !== requestingUserId) {
+    throw { status: 403, message: 'You are not authorized to delete this document.' };
+  }
+
+  // Delete from blob storage
+  try {
+    const blockBlobClient = containerClient.getBlockBlobClient(document.uniqueFileName);
+    // `deleteIfExists` is idempotent: it won't throw an error if the blob is already gone.
+    await blockBlobClient.deleteIfExists();
+  } catch (error) {
+    console.error(`Azure Blob Storage Error: Could not delete blob ${document.uniqueFileName}:`, error);
+    throw { status: 500, message: 'Failed to delete file from storage.'};
+  }
+  
+  // If blob deletion is successful, delete the record from the database.
+  await prisma.document.delete({
+    where: { id: documentId },
+  });
+
+  return { success: true, message: 'Document deleted successfully' };
+};
+
 export const documentsService = {
   prepareUpload,
   confirmUpload,
   reviewDocument,
   getMyDocuments,
   getDocumentDownloadUrl,
+  deleteDocument
 };

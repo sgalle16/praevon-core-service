@@ -45,10 +45,20 @@ const getDocumentDownloadUrl = async (req, res, next) => {
     }
 };
 
+const deleteDocument = async (req, res, next) => {
+    try {
+        await documentsService.deleteDocument(parseInt(req.params.id), req.userId);
+        res.status(204).send(); // 204 No Content response sent when deletion is successful
+    } catch (err) {
+        next(err);
+    }
+};
+
 export { 
   generateUploadUrl, 
   confirmUpload, 
   reviewDocument,
   getMyDocuments,
-  getDocumentDownloadUrl
+  getDocumentDownloadUrl,
+  deleteDocument
 };

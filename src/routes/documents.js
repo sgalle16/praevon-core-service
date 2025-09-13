@@ -8,6 +8,7 @@ import {
   reviewDocument,
   getMyDocuments,
   getDocumentDownloadUrl,
+  deleteDocument 
 } from "../controllers/documentsController.js";
 import { DocumentType, DocumentStatus } from "../generated/prisma/index.js";
 
@@ -48,6 +49,12 @@ documentsRouter.patch(
   body("status").isIn(Object.values(DocumentStatus)),
   handleValidation,
   reviewDocument
+);
+
+documentsRouter.delete('/:id', 
+  param('id').isInt(), 
+  handleValidation, 
+  deleteDocument
 );
 
 export default documentsRouter;
