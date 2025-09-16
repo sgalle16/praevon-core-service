@@ -22,8 +22,14 @@ model User {
   phone String?
   createdAt DateTime @default(now())
   identified Boolean @default(false)
+
+  // relations
   properties Property[]
   rentals Rental[] @relation("RenterRentals")
+  documents Document[]
+  contractsAsTenant Contract[] @relation("TenantContracts")
+  contractsAsLandlord Contract[]   @relation("LandlordContracts")
+
 }
 
 model Property {
@@ -35,9 +41,20 @@ model Property {
   address String
   city String
   price Float
-  status String @default("available")
+  status PropertyStatus @default(AVAILABLE)
   createdAt DateTime @default(now())
+
+  // relations
   rentals Rental[]
+  contracts Contract[]
+  documents Document[]
+}
+
+// Enum for the Property's Status
+enum PropertyStatus {
+  AVAILABLE
+  RENTED
+  IN_PROCESS 
 }
 
 model Rental {
@@ -46,6 +63,94 @@ model Rental {
   propertyId Int
   renter User @relation("RenterRentals", fields: [renterId], references: [id])
   renterId Int
-  status String @default("pending")
+  status RentalStatus @default(PENDING)
   createdAt DateTime @default(now())
+
+  contract Contract?
+}
+
+// Enum for the Rental's Status
+enum RentalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+model Contract {
+  id Int @id @default(autoincrement())
+
+  // A contract arises from a single accepted income
+  rental Rental @relation(fields: [rentalId], references: [id])
+  rentalId Int @unique 
+  
+  // Direct relationships for easy access
+  property Property @relation(fields: [propertyId], references: [id])
+  propertyId Int
+  tenant User @relation("TenantContracts", fields: [tenantId], references: [id])
+  tenantId Int
+  landlord User @relation("LandlordContracts", fields: [landlordId], references: [id])
+  landlordId Int  
+
+  // Contents of the contract
+  startDate DateTime
+  endDate DateTime
+  monthlyRent Float
+  terms String
+
+  // State and artifacts
+  status ContractStatus @default(DRAFT)
+  contractPdfUrl String?    
+  blockchainTxHash String? 
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_SIGNATURE
+  SIGNED
+  ACTIVE
+  FINISHED
+}
+
+model Document {
+  id Int @id @default(autoincrement())
+  uniqueFileName String @unique
+  originalName String
+  mimeType String?
+  storageUrl String   
+  size Int?
+  type DocumentType 
+
+  status DocumentStatus @default(PENDING_VALIDATION)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt 
+
+  // A document is always associated with a user
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+  uploadedById Int
+
+  // A document can be associated with a property (optional)
+  property Property? @relation(fields: [propertyId], references: [id])
+  propertyId Int?
+}
+
+enum DocumentType {
+  // Tenant Documents
+  TENANT_ID_FRONT
+  TENANT_ID_BACK
+  TENANT_INCOME_PROOF
+  
+  // Landlord Documents
+  PROPERTY_PHOTO
+  PROPERTY_DEED 
+}
+
+enum DocumentStatus {
+  PENDING_VALIDATION
+  APPROVED
+  REJECTED
 }
