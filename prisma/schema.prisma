@@ -112,6 +112,7 @@ enum ContractStatus {
   DRAFT
   PENDING_SIGNATURE
   SIGNED
+  NOTARIZED
   ACTIVE
   FINISHED
 }

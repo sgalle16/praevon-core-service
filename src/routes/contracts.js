@@ -6,7 +6,9 @@ import {
   getContract,
   listMyContracts,
   generateContractPdf,
-  getContractPdfDownloadUrl
+  getContractPdfDownloadUrl,
+  signContract,
+  notarizeContract
 } from "../controllers/contractsController.js";
 import { ContractStatus } from "../generated/prisma/index.js";
 
@@ -17,4 +19,6 @@ contractsRouter.get("/", listMyContracts);
 contractsRouter.get("/:id", getContract);
 contractsRouter.post("/:id/generate-pdf", generateContractPdf);
 contractsRouter.get('/:id/download-url', param('id').isInt(), handleValidation, getContractPdfDownloadUrl);
+contractsRouter.post('/:id/sign', param('id').isInt(), handleValidation, signContract);
+contractsRouter.post('/:id/notary', param('id').isInt(), handleValidation, notarizeContract);
 export default contractsRouter;

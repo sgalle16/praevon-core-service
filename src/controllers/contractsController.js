@@ -45,4 +45,22 @@ const getContractPdfDownloadUrl = async (req, res, next) => {
     }
 };
 
-export { getContract, listMyContracts, generateContractPdf, getContractPdfDownloadUrl };
+const signContract = async (req, res, next) => {
+    try {
+        const isSigned = await contractsService.signContractStatus(parseInt(req.params.id), req.userId);
+        res.json({ isSigned });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const notarizeContract = async (req, res, next) => {
+    try {
+        const isNotarized = await contractsService.notarizeContractStatus(parseInt(req.params.id), req.userId);
+        res.json({ isNotarized });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export { getContract, listMyContracts, generateContractPdf, getContractPdfDownloadUrl, signContract, notarizeContract };

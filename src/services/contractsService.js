@@ -237,11 +237,43 @@ const getContractPdfDownloadUrl = async (contractId, userId) => {
     return `${blockBlobClient.url}?${sasToken}`;
 };
 
+const signContractStatus = async (contractId, userId) => {
+    const contract = await getContractById(contractId, userId);
+
+    if (!contract.contractPdfUrl) {
+        throw { status: 404, message: 'Contract PDF has not been generated for this contract yet.' };
+    }
+
+    return prisma.contract.update({
+        where: { id: contractId },
+        data: {
+            status: ContractStatus.SIGNED
+        }
+    });
+};
+
+const notarizeContractStatus = async (contractId, userId) => {
+    const contract = await getContractById(contractId, userId);
+
+    if (!contract.contractPdfUrl) {
+        throw { status: 404, message: 'Contract PDF has not been generated for this contract yet.' };
+    }
+
+    return prisma.contract.update({
+        where: { id: contractId },
+        data: {
+            status: ContractStatus.NOTARIZED
+        }
+    });
+};
+
 
 export const contractsService = {
     createContractFromRental,
     getContractById, 
     listUserContracts,
     generateAndUploadPdf,
-    getContractPdfDownloadUrl
+    getContractPdfDownloadUrl,
+    signContractStatus,
+    notarizeContractStatus
 };
