@@ -191,7 +191,7 @@ Este documento define los **endpoints** del backend para el MVP de Praevon.
 
 ## 📄 Rentals
 
-### `POST /api/core-service/v1/rentals/` (🔒 solo dueño)
+### `POST /api/core-service/v1/rentals/`
 
 - **Descripción**: Crear solicitud de renta.
 - **Path param**: id (int)
