@@ -1,5 +1,5 @@
-import { PrismaClient } from "../generated/prisma/index.js";
-
+import { PrismaClient, PropertyStatus, RentalStatus } from "../generated/prisma/index.js";
+import { contractsService } from "../services/contractsService.js";
 const prisma = new PrismaClient();
 
 const createRental = async (req, res, next) => {
@@ -12,7 +12,7 @@ const createRental = async (req, res, next) => {
     if (property.ownerId === req.userId) return res.status(400).json({ error: 'You cannot rent your own property.' });
 
     const existing = await prisma.rental.findFirst({
-      where: { propertyId: pid, renterId: req.userId, status: 'pending' }
+      where: { propertyId: pid, renterId: req.userId, status: RentalStatus.PENDING }
     });
     if (existing) return res.status(400).json({ error: 'You already have a pending rental request for this property.' });
 
@@ -20,7 +20,7 @@ const createRental = async (req, res, next) => {
       data: {
         property: { connect: { id: pid }},
         renter: { connect: { id: req.userId }},
-        status: 'pending'
+        status: RentalStatus.PENDING
       }
     });
     res.status(201).json(rental);
@@ -72,10 +72,24 @@ const updateRentalStatus = async (req, res, next) => {
       data: { status }
     });
 
-    if (status === 'accepted') {
-      await prisma.property.update({ where: { id: rental.propertyId }, data: { status: 'rented' }});
-    }
+    if (status === RentalStatus.ACCEPTED) {
+      await prisma.property.update({ 
+        where: { id: rental.propertyId }, 
+        data: { status: PropertyStatus.IN_PROCESS }
+      });
 
+      // Create a Draft Contract  when a rental is accepted
+      await contractsService.createContractFromRental(rental);
+
+    } else if (
+      (status === RentalStatus.REJECTED || status === RentalStatus.CANCELLED) &&
+      rental.status === RentalStatus.ACCEPTED) {
+      await prisma.property.update({
+        where: { id: rental.propertyId },
+        data: { status: PropertyStatus.AVAILABLE }
+      });
+      
+    }
     res.json(updated);
   } catch (err) { next(err); }
 };

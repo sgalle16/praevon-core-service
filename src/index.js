@@ -7,6 +7,8 @@ import authRouter from "./routes/auth.js";
 import userRouter from "./routes/user.js";
 import propertiesRouter from "./routes/properties.js";
 import rentalsRouter from "./routes/rentals.js";
+import documentsRouter from "./routes/documents.js";
+import contractsRouter from "./routes/contracts.js";
 import errorHandler from "./middlewares/errorHandler.js";
 
 dotenv.config();
@@ -25,6 +27,8 @@ coreServiceRouter.use('/auth', authRouter);
 coreServiceRouter.use('/users', userRouter);
 coreServiceRouter.use('/properties', propertiesRouter);
 coreServiceRouter.use('/rentals', rentalsRouter);
+coreServiceRouter.use('/documents', documentsRouter);
+coreServiceRouter.use('/contracts', contractsRouter);
 
 app.use('/api/core-service/v1', coreServiceRouter);
 
