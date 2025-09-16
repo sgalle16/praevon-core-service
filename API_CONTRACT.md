@@ -123,7 +123,14 @@ Este documento define los **endpoints** del backend para el MVP de Praevon.
     "id": 1,
     "username": "juanito"
   },
-  "rentals": []
+  "documents": [
+    {
+      "id": 1,
+      "storageUrl": "https://domainName.blob.core.windows.net/documents/property_photo/randomImage.jpg",
+      "type": "PROPERTY_PHOTO",
+      "originalName": "house.jpg"
+    }
+  ]
 }
 ```
 

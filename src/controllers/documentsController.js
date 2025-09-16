@@ -18,6 +18,31 @@ const confirmUpload = async (req, res, next) => {
   }
 };
 
+const unifiedUpload = async (req, res, next) => {
+  try {
+    const { type, propertyId } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
+
+    const document = await documentsService.superUpload({
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      buffer: file.buffer, // el archivo en memoria
+      type,
+      propertyId,
+      userId: req.userId,
+    });
+
+    res.status(201).json(document);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const reviewDocument = async (req, res, next) => {
     try {
         const updatedDocument = await documentsService.reviewDocument(parseInt(req.params.id), req.body.status, req.userId);
@@ -60,5 +85,6 @@ export {
   reviewDocument,
   getMyDocuments,
   getDocumentDownloadUrl,
-  deleteDocument
+  deleteDocument,
+  unifiedUpload
 };

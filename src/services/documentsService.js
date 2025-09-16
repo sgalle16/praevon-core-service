@@ -305,11 +305,52 @@ const deleteDocument = async (documentId, requestingUserId) => {
   return { success: true, message: 'Document deleted successfully' };
 };
 
+const superUpload = async ({ originalName, mimeType, size, type, propertyId = null, userId, buffer }) => {
+  validateDocumentRequest(type, size, mimeType);
+  
+  // Authorize: check if the user is the owner of the property for property-related documents.
+  if (propertyId) {
+      const property = await prisma.property.findUnique({ where: { id: parseInt(propertyId) } });
+      if (!property) throw { status: 404, message: 'Property not found.' };
+      if (property.ownerId !== userId) throw { status: 403, message: 'You are not the owner of this property.' };
+  }
+
+  // Create a unique filename and virtual folder path for security and organization.
+  const extension = path.extname(originalName);
+  const uniqueFileName = `${type.toLowerCase()}/${uuidv4()}${extension}`; 
+
+  const blockBlobClient = containerClient.getBlockBlobClient(uniqueFileName);
+  try {
+  await blockBlobClient.uploadData(buffer, {
+    blobHTTPHeaders: { blobContentType: mimeType },
+  });
+  } catch (err) {
+    throw { status: 500, message: "Error subiendo archivo a Blob Storage", detail: err.message };
+  }
+
+  const document = await prisma.document.create({
+    data: {
+      uniqueFileName,
+      originalName,
+      mimeType,
+      size,
+      type,
+      storageUrl: blockBlobClient.url,
+      status: DocumentStatus.PENDING_VALIDATION,
+      uploadedById: userId,
+      propertyId: propertyId ? parseInt(propertyId) : undefined,
+    },
+  });
+
+  return document;
+}
+
 export const documentsService = {
   prepareUpload,
   confirmUpload,
   reviewDocument,
   getMyDocuments,
   getDocumentDownloadUrl,
-  deleteDocument
+  deleteDocument,
+  superUpload
 };

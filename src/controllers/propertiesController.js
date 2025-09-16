@@ -26,25 +26,53 @@ const listProperties = async (req, res, next) => {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: { owner: { select: { id: true, username: true }}}
+        include: {
+          owner: { select: { id: true, username: true }},
+          documents: {
+            select: {
+              id: true,
+              storageUrl: true,
+              type: true,
+              originalName: true
+            }
+          }
+        }
       })
     ]);
 
     res.json({ page: Number(page), limit: take, total, items });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    next(err); 
+  }
 };
+
 
 const getProperty = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
     const prop = await prisma.property.findUnique({
       where: { id },
-      include: { owner: { select: { id: true, username: true }}, rentals: true }
+      include: { 
+        owner: { select: { id: true, username: true }},
+        rentals: true,
+        documents: {
+          select: {
+            id: true,
+            storageUrl: true,
+            type: true,
+            originalName: true
+          }
+        }
+      }
     });
+
     if (!prop) return res.status(404).json({ error: 'Property not found' });
     res.json(prop);
-  } catch (err) { next(err); }
+  } catch (err) { 
+    next(err); 
+  }
 };
+
 
 const createProperty = async (req, res, next) => {
   try {

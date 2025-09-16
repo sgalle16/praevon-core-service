@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body, param } from "express-validator";
+import multer from "multer";
 import auth from "../middlewares/auth.js";
 import handleValidation from "../middlewares/validators.js";
 import {
@@ -8,11 +9,14 @@ import {
   reviewDocument,
   getMyDocuments,
   getDocumentDownloadUrl,
-  deleteDocument 
+  deleteDocument,
+  unifiedUpload
 } from "../controllers/documentsController.js";
 import { DocumentType, DocumentStatus } from "../generated/prisma/index.js";
 
 const documentsRouter = Router();
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 documentsRouter.use(auth);
 
@@ -22,6 +26,16 @@ documentsRouter.get(
   param("id").isInt(),
   handleValidation,
   getDocumentDownloadUrl
+);
+
+documentsRouter.post(
+  "/upload",
+  auth,
+  upload.single("file"), // recibe el archivo en multipart/form-data
+  body("type").isIn(Object.values(DocumentType)),
+  body("propertyId").optional().isInt(),
+  handleValidation,
+  unifiedUpload
 );
 
 documentsRouter.post(
