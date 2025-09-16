@@ -455,3 +455,124 @@ Este documento define los **endpoints** del backend para el MVP de Praevon.
 -   **Descripción**: Elimina un documento. Solo el usuario que subió el documento puede realizar esta acción.
 -   **Path param**: `id` (int) - El ID del documento a eliminar.
 -   **Respuesta 204 (No Content)**: El cuerpo de la respuesta estará vacío, indicando que la eliminación fue exitosa.
+
+## ✒️ Contracts
+
+### `GET /api/core-service/v1/contracts` (🔒 requiere JWT)
+
+- **Descripción:** Obtiene una lista de todos los contratos en los que el usuario autenticado es parte (ya sea como propietario o como inquilino).
+- **Headers**: Authorization: Bearer token
+
+- **Respuesta**:
+
+```json
+{
+  [
+  {
+    "id": 1,
+    "rentalId": 45,
+    "propertyId": 12,
+    "tenantId": 3,
+    "landlordId": 1,
+    "startDate": "2025-09-15T00:00:00.000Z",
+    "endDate": "2026-09-15T00:00:00.000Z",
+    "monthlyRent": 2500000,
+    "status": "PENDING_SIGNATURE",
+    "contractPdfUrl": "https://praevonsgsa.blob.core.windows.net/documents/contracts/6cc8207c-488a-46cb-81e1-ed7ccd7713aa.pdf",
+    "blockchainTxHash":null,
+    "title":"Apartamento Acogedor en Laureles",
+    "address":"Calle 573 # 70-10"},
+    "property": {
+        "id": 1,
+        "title": "Apartamento con Vista al Parque"
+    },
+    "tenant": {
+        "id": 3,
+        "username": "Ana Inquilina"
+    },
+    "landlord": {
+        "id": 1,
+        "username": "Carlos Propietario"
+    }
+  }
+]
+}
+```
+
+
+### `GET /api/core-service/v1/contracts/:id` (🔒 requiere JWT)
+
+- **Descripción:** Obtiene el detalle de un contrato específico. Solo el propietario o el inquilino de ese contrato pueden acceder.
+- **Headers**: Authorization: Bearer token
+- **Path param**: id (int) - El contractId
+
+- **Respuesta**:
+
+```json
+{
+  [
+  {
+    "id": 1,
+    "rentalId": 45,
+    "propertyId": 12,
+    "tenantId": 3,
+    "landlordId": 1,
+    "startDate": "2025-09-15T00:00:00.000Z",
+    "endDate": "2026-09-15T00:00:00.000Z",
+    "monthlyRent": 2500000,
+    "status": "PENDING_SIGNATURE",
+    "contractPdfUrl": "https://praevonsgsa.blob.core.windows.net/documents/contracts/...pdf",
+    "property": {
+        "id": 1,
+        "title": "Apartamento con Vista al Parque"
+    },
+    "tenant": {
+        "id": 3,
+        "username": "Ana Inquilina"
+    },
+    "landlord": {
+        "id": 1,
+        "username": "Carlos Propietario"
+    }
+  }
+]
+}
+```
+
+### `POST /api/core-service/v1/contracts/generate-pdf` (🔒 requiere JWT)
+
+- **Descripción:** Genera el documento PDF oficial del contrato, lo   sube de forma segura a la nube y actualiza el estado del contrato a PENDING_SIGNATURE.
+- **Headers**: Authorization: Bearer token
+- **Path param**: id (int) - El contractId
+
+- **Respuesta**:
+
+```json
+{
+  {
+  "message": "PDF generated and uploaded successfully",
+  "contract": {
+    "id": 1,
+    // ... otros campos del contrato
+    "status": "PENDING_SIGNATURE",
+    "contractPdfUrl": "https://praevonsgsa.blob.core.windows.net/documents/contracts/...pdf"
+  }
+}
+}
+```
+
+### `GET /api/core-service/v1/contracts/download-url` (🔒 requiere JWT)
+
+- **Descripción:** Obtiene una URL segura y temporal (válida por 10 minutos) para descargar el PDF del contrato. Solo las partes del contrato pueden acceder.
+- **Headers**: Authorization: Bearer token
+- **Path param**: id (int) - El contractId
+
+- **Respuesta**:
+
+```json
+{
+  {
+  "downloadUrl": "https://praevonsgsa.blob.core.windows.net/documents/contracts/...?sv=...&sig=..."
+  }
+}
+```
