@@ -107,12 +107,46 @@ const updateProperty = async (req, res, next) => {
 const deleteProperty = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    const prop = await prisma.property.findUnique({ where: { id }});
-    if (!prop) return res.status(404).json({ error: 'Property not found' });
-    if (prop.ownerId !== req.userId) return res.status(403).json({ error: 'Unauthorized' });
-    await prisma.property.delete({ where: { id }});
+
+    const prop = await prisma.property.findUnique({
+      where: { id },
+      include: {
+        rentals: true,
+        contracts: true,
+      },
+    });
+
+    if (!prop) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    if (prop.ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      for (const contract of prop.contracts) {
+        await tx.contract.delete({
+          where: { id: contract.id },
+        });
+      }
+
+      for (const rental of prop.rentals) {
+        await tx.rental.delete({
+          where: { id: rental.id },
+        });
+      }
+
+      await tx.property.delete({
+        where: { id },
+      });
+    });
+
     res.status(204).send();
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error("Error deleting property:", err);
+    next(err);
+  }
 };
 
 export {listProperties, getProperty, createProperty, updateProperty, deleteProperty}
