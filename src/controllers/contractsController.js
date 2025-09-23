@@ -12,6 +12,18 @@ const getContract = async (req, res, next) => {
   }
 };
 
+const getContractByRental = async (req, res, next) => {
+  try {
+    const contract = await contractsService.getContractByRentalId(
+      parseInt(req.params.id),
+      req.userId
+    );
+    res.json(contract);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const listMyContracts = async (req, res, next) => {
   try {
     const contracts = await contractsService.listUserContracts(req.userId);
@@ -63,4 +75,4 @@ const notarizeContract = async (req, res, next) => {
     }
 };
 
-export { getContract, listMyContracts, generateContractPdf, getContractPdfDownloadUrl, signContract, notarizeContract };
+export { getContract, getContractByRental, listMyContracts, generateContractPdf, getContractPdfDownloadUrl, signContract, notarizeContract };

@@ -94,6 +94,24 @@ const getContractById = async (contractId, userId) => {
     return contract;
 };
 
+const getContractByRentalId = async (rentalId, userId) => {
+    const contract = await prisma.contract.findUnique({
+        where: { rentalId: rentalId },
+        include: {
+            landlord: { select: { id: true, username: true, email: true, phone: true } },
+            tenant: { select: { id: true, username: true, email: true, phone: true } },
+            property: true,
+        }
+    });
+    if (!contract) throw { status: 404, message: 'Contract not found.' };
+    
+    // Authorization: only the involved parties can see it
+    if (contract.landlordId !== userId && contract.tenantId !== userId) {
+        throw { status: 403, message: 'You are not authorized to view this contract.' };
+    }
+    return contract;
+};
+
 const listUserContracts = async (userId) => {
     return prisma.contract.findMany({
         where: {
@@ -270,7 +288,8 @@ const notarizeContractStatus = async (contractId, userId) => {
 
 export const contractsService = {
     createContractFromRental,
-    getContractById, 
+    getContractById,
+    getContractByRentalId, 
     listUserContracts,
     generateAndUploadPdf,
     getContractPdfDownloadUrl,
