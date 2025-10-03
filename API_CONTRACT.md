@@ -546,7 +546,7 @@ Este documento define los **endpoints** del backend para el MVP de Praevon.
 }
 ```
 
-### `POST /api/core-service/v1/contracts/generate-pdf` (🔒 requiere JWT)
+### `POST /api/core-service/v1/contracts/:id/generate-pdf` (🔒 requiere JWT)
 
 - **Descripción:** Genera el documento PDF oficial del contrato, lo   sube de forma segura a la nube y actualiza el estado del contrato a PENDING_SIGNATURE.
 - **Headers**: Authorization: Bearer token
@@ -568,7 +568,7 @@ Este documento define los **endpoints** del backend para el MVP de Praevon.
 }
 ```
 
-### `GET /api/core-service/v1/contracts/download-url` (🔒 requiere JWT)
+### `GET /api/core-service/v1/contracts/:id/download-url` (🔒 requiere JWT)
 
 - **Descripción:** Obtiene una URL segura y temporal (válida por 10 minutos) para descargar el PDF del contrato. Solo las partes del contrato pueden acceder.
 - **Headers**: Authorization: Bearer token
